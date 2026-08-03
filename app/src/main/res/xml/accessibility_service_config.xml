@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Scope is deliberately minimal — Google Play requires apps to use the narrowest
+    accessibility capabilities that still achieve the functionality:
+
+    - typeWindowStateChanged only. The service discards every other event type
+      (see AppBlockerAccessibilityService.onAccessibilityEvent), so subscribing to
+      typeWindowContentChanged would deliver a high volume of screen-content events
+      we never look at.
+    - canRetrieveWindowContent is deliberately NOT declared. The service needs one
+      thing — the foreground package name — and AccessibilityEvent.getPackageName()
+      supplies it for typeWindowStateChanged without any content-retrieval capability.
+      Declaring it would grant the ability to read window content the app never reads,
+      and would make Android tell the user this service "can retrieve window content"
+      while our own disclosure promises the opposite. Do not re-add it: without it the
+      OS cannot hand us screen content at all, which is precisely the guarantee the
+      disclosure makes.
+    - isAccessibilityTool is deliberately NOT declared at all (it defaults to false).
+      Spike AI is not an assistive tool for users with disabilities, so it does not
+      claim to be one, and it therefore relies on in-app prominent disclosure + consent
+      to satisfy Play's User Data policy. Do not add this attribute in either form:
+      declaring it true would be a false claim, and declaring it false invites the
+      reading that the value was considered optional rather than settled.
+
+    The consent itself is enforced in code, not here: AppBlockerAccessibilityService
+    reads nothing until AccessibilityConsent.isGranted() is true, so enabling this
+    service from Android Settings without passing through the in-app disclosure grants
+    no data access.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:description="@string/accessibility_service_description"
+    android:notificationTimeout="100" />

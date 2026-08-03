@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Spike AI</string>
+    <string name="blocking_service_label">Spike AI App Blocking</string>
+    <!--
+        Shown by Android in Settings › Accessibility. Kept precisely aligned with the
+        in-app prominent disclosure (a11y_disclosure_* in Strings.kt) and with what
+        accessibility_service_config.xml actually declares: we read the foreground
+        app's package name only, never screen content.
+    -->
+    <string name="accessibility_service_description">Spike AI reads the package name of the app you have open, so that during a focus session it can show the focus shield when you open an app you chose to block. This is the only thing it reads: Spike AI does not read, record, store or share the text, passwords, messages or any other content displayed on your screen, and this information never leaves your device. You can turn this off at any time in Settings.</string>
+</resources>

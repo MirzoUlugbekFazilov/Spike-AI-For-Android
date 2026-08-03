@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+        SCHEDULE_EXACT_ALARM only. USE_EXACT_ALARM is deliberately NOT declared: Google
+        Play restricts it to apps whose core function is an alarm clock or calendar, which
+        Spike AI is not, and it would pull a restricted-permission review onto every
+        submission. NotificationScheduler already degrades gracefully when exact alarms
+        are unavailable (canScheduleExactAlarms() -> setWindow(), SecurityException -> set()).
+    -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!--
+      App-blocking (Focus / Lock-in / Sweat modes).
+
+      PACKAGE_USAGE_STATS is deliberately NOT declared: nothing in the app ever
+      queried UsageStatsManager — the foreground package name comes from the
+      accessibility service — so requesting it asked the user for a sensitive
+      special permission the app does not use. Play only allows permissions that
+      the app's functionality actually requires.
+    -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!--
+      Package visibility (Android 11+). Instead of the broad, Play-flagged
+      QUERY_ALL_PACKAGES permission, we declare exactly what the app blocker needs:
+      visibility of launchable apps (for the block-list picker) and of the
+      home/launcher app (so it is never blocked). This keeps the app off Play's
+      sensitive-permissions review while preserving full functionality.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+    </queries>
+
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+
+    <application
+        android:name=".SpikeApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:resizeableActivity="true"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SpikeAI">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density|uiMode|locale|layoutDirection|fontScale"
+            android:theme="@style/Theme.SpikeAI">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Supabase magic-link / OAuth callback: spikeai://login-callback -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="spikeai" android:host="login-callback" />
+            </intent-filter>
+        </activity>
+
+        <!-- App-blocking accessibility service (detects foreground app) -->
+        <service
+            android:name=".blocking.AppBlockerAccessibilityService"
+            android:exported="false"
+            android:label="@string/blocking_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Foreground service that keeps blocking alive -->
+        <service
+            android:name=".blocking.FocusForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the active focus session and app blocking running." />
+        </service>
+
+        <!-- Alarm / notification receivers -->
+        <receiver
+            android:name=".notifications.NotificationReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".notifications.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
