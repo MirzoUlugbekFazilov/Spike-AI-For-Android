@@ -15,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
+// Test comment for verifying the Git history workflow — safe to delete.
 class SpikeApp : Application() {
     override fun onCreate() {
         super.onCreate()
